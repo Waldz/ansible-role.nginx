@@ -1,0 +1,78 @@
+---
+- name: Install packages
+  sudo: true
+  apt: pkg={{ item }} state=installed
+  with_items:
+    - nginx
+  tags: nginx
+
+
+- name: Check home directory of www-data
+  sudo: true
+  shell: >
+    echo ~www-data
+  register: nginx_home_fact
+  changed_when: nginx_home_fact.stdout != '/home/www-data'
+  tags: nginx
+
+- name: Stop service, because move directory will be moved elsewhere
+  sudo: true
+  service: name=nginx state=stopped
+  when: nginx_home_fact.changed
+  tags: nginx
+
+- name: Create home directory for www-data
+  sudo: true
+  user: name=www-data createhome=yes home="/home/www-data" shell="/bin/bash"
+  #shell: usermod -m -d /home/www-data -s /bin/bash www-data
+  when: nginx_home_fact.changed
+  notify: start nginx
+  tags: nginx
+
+
+- name: Create default site directories
+  sudo: true
+  file:
+    state=directory
+    path={{ item }}
+    owner=www-data
+    mode=0755
+  with_items:
+    - /var/log/nginx/default
+    - /var/www
+    - /var/www/default
+  notify: reload nginx
+  tags: nginx
+
+
+- name: Deploy default site
+  sudo: true
+  sudo_user: www-data
+  template: src="var/www/default/index.html" dest="/var/www/default/index.html"
+  tags: nginx
+
+
+- name: Update default site configuration
+  sudo: true
+  template: >
+    src="etc/nginx/sites-available/default.conf"
+    dest="/etc/nginx/sites-available/default"
+    owner=www-data
+  notify: reload nginx
+  tags: nginx
+
+
+- name: Enable default site
+  sudo: true
+  file: >
+    state=link
+    src=/etc/nginx/sites-available/default
+    dest=/etc/nginx/sites-enabled/default
+    owner=www-data
+  notify: reload nginx
+  tags: nginx
+
+
+- name: Ensure service is started
+  service: name=nginx state=started enabled=yes
+  tags: nginx
