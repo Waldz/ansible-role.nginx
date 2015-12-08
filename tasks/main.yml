@@ -36,6 +36,7 @@
     state=directory
     path={{ item }}
     owner=www-data
+    group=www-data
     mode=0755
   with_items:
     - /var/log/nginx/default
@@ -57,7 +58,6 @@
   template: >
     src="etc/nginx/sites-available/default.conf"
     dest="/etc/nginx/sites-available/default"
-    owner=www-data
   notify: reload nginx
   tags: nginx
 
@@ -68,7 +68,6 @@
     state=link
     src=/etc/nginx/sites-available/default
     dest=/etc/nginx/sites-enabled/default
-    owner=www-data
   notify: reload nginx
   tags: nginx
 
