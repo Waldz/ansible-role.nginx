@@ -1,4 +1,12 @@
 ---
+- name: Remove other HTTP services
+  sudo: true
+  apt: pkg={{ item }} state=absent
+  with_items: nginx_apt_packages_remove
+  when: nginx_apt_packages_remove is defined
+  tags: nginx
+
+
 - name: Install packages
   sudo: true
   apt: pkg={{ item }} state=installed

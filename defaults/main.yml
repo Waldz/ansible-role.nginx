@@ -3,3 +3,5 @@ nginx:
   # Servers default domain https://domain.com/ is under SSL, by default
   default_ssl_cert: /etc/nginx/ssl/server.crt
   default_ssl_key: /etc/nginx/ssl/server.key
+
+nginx_apt_packages_remove: [apache2]
